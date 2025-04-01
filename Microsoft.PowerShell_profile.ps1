@@ -75,27 +75,6 @@ Set-PSReadLineOption -AddToHistoryHandler {
 Set-PSReadLineOption -PredictionSource HistoryAndPlugin
 Set-PSReadLineOption -MaximumHistoryCount 10000
 
-function Update-Profile {
-    try {
-        $url = "https://raw.githubusercontent.com/riitchy/powershell-profile/refs/heads/master/Microsoft.PowerShell_profile.ps1"
-        $oldhash = Get-FileHash $PROFILE
-        Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
-        $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
-        if ($newhash.Hash -ne $oldhash.Hash) {
-            Copy-Item -Path "$env:temp/Microsoft.PowerShell_profile.ps1" -Destination $PROFILE -Force
-            Write-Host "Profile has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
-        } else {
-            Write-Host "Profile is up to date." -ForegroundColor Green
-        }
-    } catch {
-        Write-Error "Unable to check for `$profile updates: $_"
-    } finally {
-        Remove-Item "$env:temp/Microsoft.PowerShell_profile.ps1" -ErrorAction SilentlyContinue
-    }
-}
-
-Update-Profile
-
 function Update-PowerShell {
     try {
         Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
@@ -159,7 +138,7 @@ function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
 
 # Open WinUtil full-release
 function winutil {
-	irm https://christitus.com/win | iex
+	Invoke-RestMethod https://christitus.com/win | Invoke-Expression
 }
 
 function admin {
@@ -244,8 +223,4 @@ function sysinfo { Get-ComputerInfo }
 function flushdns {
 	Clear-DnsClientCache
 	Write-Host "DNS has been flushed"
-}
-
-function p {
-    Test-Connection -Count 1 -Quiet
 }
