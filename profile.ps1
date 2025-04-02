@@ -122,15 +122,6 @@ function Clear-Cache {
     Write-Host "Cache clearing completed." -ForegroundColor Green
 }
 
-# Quick Access to Editing the Profile
-function Edit-Profile {
-    hx $PROFILE
-}
-Set-Alias -Name ep -Value Edit-Profile
-
-function Reload-Profile {
-    . $PROFILE
-}
 
 function touch($file) { "" | Out-File $file -Encoding ASCII }
 
@@ -191,9 +182,6 @@ function tail {
     param($Path, $n = 10, [switch]$f = $false)
     Get-Content $Path -Tail $n -Wait:$f
 }
-
-# Enhanced Listing
-function ll { Get-ChildItem -Path . -Force | Format-Table -AutoSize }
 
 # Git Shortcuts
 function gs { git status }
