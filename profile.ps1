@@ -123,7 +123,13 @@ function Clear-Cache {
 }
 
 
-function touch($file) { "" | Out-File $file -Encoding ASCII }
+function touch($file) {
+    if (!(Test-Path $file)) {
+        "" | Out-File $file -Encoding ASCII
+    } else {
+        (Get-Item $file).LastWriteTime = Get-Date
+    }
+}
 
 function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
 
@@ -142,11 +148,15 @@ function admin {
 }
 
 function grep($regex, $dir) {
-    if ( $dir ) {
-        Get-ChildItem $dir | select-string $regex
+    if ($dir) {
+        if (!(Test-Path $dir)) {
+            Write-Error "Le répertoire $dir n'existe pas"
+            return
+        }
+        Get-ChildItem $dir | Select-String $regex -ErrorAction SilentlyContinue
         return
     }
-    $input | select-string $regex
+    $input | Select-String $regex -ErrorAction SilentlyContinue
 }
 
 function df {
@@ -154,6 +164,10 @@ function df {
 }
 
 function sed($file, $find, $replace) {
+    if (!(Test-Path $file)) {
+        Write-Error "Le fichier $file n'existe pas"
+        return
+    }
     (Get-Content $file).replace("$find", $replace) | Set-Content $file
 }
 
@@ -166,7 +180,13 @@ function export($name, $value) {
 }
 
 function pkill($name) {
-    Get-Process $name -ErrorAction SilentlyContinue | Stop-Process
+    $processes = Get-Process $name -ErrorAction SilentlyContinue
+    if ($processes) {
+        $processes | Stop-Process
+        Write-Host "Processus $name terminé(s)" -ForegroundColor Green
+    } else {
+        Write-Host "Aucun processus $name trouvé" -ForegroundColor Yellow
+    }
 }
 
 function pgrep($name) {
@@ -180,6 +200,10 @@ function head {
 
 function tail {
     param($Path, $n = 10, [switch]$f = $false)
+    if (!(Test-Path $Path)) {
+        Write-Error "Le fichier $Path n'existe pas"
+        return
+    }
     Get-Content $Path -Tail $n -Wait:$f
 }
 
