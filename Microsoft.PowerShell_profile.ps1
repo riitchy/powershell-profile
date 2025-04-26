@@ -85,6 +85,26 @@ if ($supportsVirtualTerminal) {
 }
 Set-PSReadLineOption -MaximumHistoryCount 10000
 
+# Check for Profile Updates
+function Update-Profile {
+    try {
+        $url = "https://raw.githubusercontent.com/riitchy/powershell-profile/master/Microsoft.PowerShell_profile.ps1"
+        $oldhash = Get-FileHash $PROFILE
+        Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
+        $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
+        if ($newhash.Hash -ne $oldhash.Hash) {
+            Copy-Item -Path "$env:temp/Microsoft.PowerShell_profile.ps1" -Destination $PROFILE -Force
+            Write-Host "Profile has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
+        } else {
+            Write-Host "Profile is up to date." -ForegroundColor Green
+        }
+    } catch {
+        Write-Error "Unable to check for `$profile updates: $_"
+    } finally {
+        Remove-Item "$env:temp/Microsoft.PowerShell_profile.ps1" -ErrorAction SilentlyContinue
+    }
+}
+
 function Update-PowerShell {
     try {
         Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
