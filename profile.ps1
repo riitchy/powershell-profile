@@ -204,6 +204,12 @@ function Clear-Cache {
     Write-Host "Cache clearing completed." -ForegroundColor Green
 }
 
+# Quick Access to Editing the Profile
+function Edit-Profile {
+    hx $PROFILE.CurrentUserAllHosts
+}
+Set-Alias -Name ep -Value Edit-Profile
+
 function Reload-Profile {
     . $PROFILE.CurrentUserAllHosts
 }
