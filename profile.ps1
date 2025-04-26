@@ -109,6 +109,8 @@ $scriptblock = {
 }
 Register-ArgumentCompleter -Native -CommandName git -ScriptBlock $scriptblock
 
+$env:BAT_STYLE="header,header-filesize,grid"
+
 # Check for Profile Updates
 function Update-Profile {
     try {
