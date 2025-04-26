@@ -189,7 +189,7 @@ function Clear-Cache {
 }
 
 function Reload-Profile {
-    & $PROFILE.CurrentUserAllHosts
+    . $PROFILE.CurrentUserAllHosts
 }
 
 function touch($file) {
