@@ -188,6 +188,9 @@ function Clear-Cache {
     Write-Host "Cache clearing completed." -ForegroundColor Green
 }
 
+function Reload-Profile {
+    & $PROFILE
+}
 
 function touch($file) {
     if (!(Test-Path $file)) {
