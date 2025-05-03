@@ -20,7 +20,7 @@ if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
 
 Import-Module -Name Terminal-Icons, LexxPSTools, ComputerInventory
 
-if (winget list --id JanDeDobbeleer.OhMyPosh) {
+if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "PowerShell\oh-my-posh\themes\amro.omp.json"
     oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Invoke-Expression
 }
