@@ -13,12 +13,19 @@ if ([bool]([System.Security.Principal.WindowsIdentity]::GetCurrent()).IsSystem) 
     [System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'true', [System.EnvironmentVariableTarget]::Machine)
 }
 
+if (-not (Test-Path -Path C:\Users\$env:USERNAME\Documents\PowerShell\Modules)) {
+    New-Item -ItemType Directory -Path "C:\Users\$env:USERNAME\Documents\Powershell\Modules" -Force
+}
+
+# Ajout du dossier modules locaux au path
+$env:PSModulePath = "C:\Users\$env:USERNAME\Documents\PowerShell\Modules;" + $env:PSModulePath
+
 # Vérifier si Terminal Icons est installé
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
 
-Import-Module -Name Terminal-Icons, LexxPSTools, ComputerInventory
+Import-Module -Name Terminal-Icons, LexxPSTools #, ComputerInventory
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "PowerShell\oh-my-posh\themes\amro.omp.json"
