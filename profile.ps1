@@ -13,12 +13,13 @@ if ([bool]([System.Security.Principal.WindowsIdentity]::GetCurrent()).IsSystem) 
     [System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'true', [System.EnvironmentVariableTarget]::Machine)
 }
 
-if (-not (Test-Path -Path C:\Users\$env:USERNAME\Documents\PowerShell\Modules)) {
-    New-Item -ItemType Directory -Path "C:\Users\$env:USERNAME\Documents\Powershell\Modules" -Force
+$ModulesPath = "C:\Users\$env:USERNAME\PSModules"
+if (-not (Test-Path -Path $ModulesPath)) {
+    New-Item -ItemType Directory -Path $ModulesPath -Force
 }
 
 # Ajout du dossier modules locaux au path
-$env:PSModulePath = "C:\Users\$env:USERNAME\Documents\PowerShell\Modules;" + $env:PSModulePath
+$env:PSModulePath = $ModulesPath + ";" + $env:PSModulePath
 
 # Vérifier si Terminal Icons est installé
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
