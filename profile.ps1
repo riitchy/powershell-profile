@@ -26,7 +26,7 @@ if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
 
-Import-Module -Name Terminal-Icons, LexxPoshTools #, ComputerInventory
+Import-Module -Name Terminal-Icons, LexxPoshTools, poshible
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "PowerShell\oh-my-posh\themes\amro.omp.json"
