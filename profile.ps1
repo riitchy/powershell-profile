@@ -346,6 +346,10 @@ function wi($app) {
 
 function wl { winget list }
 
+function wlu { winget list --upgrade-available }
+
+function wua { winget upgrade --all }
+
 # Quick Access to System Information
 function sysinfo { Get-ComputerInfo }
 
