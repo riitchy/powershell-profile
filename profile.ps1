@@ -336,6 +336,14 @@ function lazyg {
     git push
 }
 
+function ws($app) {
+	winget search $app
+}
+
+function wi($app) {
+	winget install $app
+}
+
 # Quick Access to System Information
 function sysinfo { Get-ComputerInfo }
 
