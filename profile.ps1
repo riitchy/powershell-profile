@@ -344,6 +344,8 @@ function wi($app) {
 	winget install $app
 }
 
+function wl { winget list }
+
 # Quick Access to System Information
 function sysinfo { Get-ComputerInfo }
 
