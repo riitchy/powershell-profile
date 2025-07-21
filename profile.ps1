@@ -361,3 +361,7 @@ function flushdns {
 	Clear-DnsClientCache
 	Write-Host "DNS has been flushed"
 }
+
+function claude {
+	npx win-claude-code@latest
+}
