@@ -1,0 +1,41 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# PowerShell
+*.exe
+*.dll
+*.pdb
+*.tmp
+*.log
+*.ps1xml
+*.pssproj
+*.RestoreState.json
+
+# Logs et historiques
+*_history
+history.txt
+logs/
+.history/
+
+# Fichiers temporaires
+*.bak
+*~
+*.swp
+
+# Fichiers sensibles
+*password*
+*cred*
+*secret*
+*key*
+
+# Fichiers de configuration IDE et outils
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+.vs/
+
+# Fichiers de configuration personnels
+*config.local*
+*settings.local*
