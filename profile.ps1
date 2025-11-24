@@ -26,7 +26,20 @@ if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
 
-Import-Module -Name Terminal-Icons, LexxPoshTools, poshible
+$LexxPoshToolsInstalled = Get-Module -ListAvailable -Name LexxPoshTools
+$poshibleInstalled = Get-Module -ListAvailable -Name poshible
+
+$modulesToLoad = @('Terminal-Icons')
+
+if ($LexxPoshToolsInstalled) { $modulesToLoad += 'LexxPoshTools' } else { Write-Warning "LexxPoshTools is not installed." }
+if ($poshibleInstalled) { $modulesToLoad += 'poshible' } else { Write-Warning "poshible is not installed." }
+
+try {
+    Import-Module -Name $modulesToLoad -ErrorAction Stop
+}
+catch {
+    Write-Warning "Some modules failed to import : $_"
+}
 
 # Utilisation du prompt Starship (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
