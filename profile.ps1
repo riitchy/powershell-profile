@@ -115,6 +115,9 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+RightArrow' -Function ForwardWord
 Set-PSReadLineKeyHandler -Chord 'Ctrl+z' -Function Undo
 Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Redo
 
+# Vi mode cursor shapes
+Set-PSReadLineOption -ViModeIndicator Cursor
+
 # Custom functions for PSReadLine
 Set-PSReadLineOption -AddToHistoryHandler {
     param($line)
