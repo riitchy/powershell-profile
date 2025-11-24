@@ -45,7 +45,7 @@ catch {
 # Invoke-Expression (&starship init powershell)
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
-    $ohmyposhConfig = Join-Path $env:USERPROFILE "amro.omp.json"
+    $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "\PowerShell\oh-my-posh\themes\amro.omp.json"
     oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Invoke-Expression
 }
 else {
