@@ -1,4 +1,4 @@
-# Partiellement repris de Chris Titus Tech : https://raw.githubusercontent.com/ChrisTitusTech/powershell-profile/main/profile.ps1
+# Partially based on Chris Titus Tech: https://raw.githubusercontent.com/ChrisTitusTech/powershell-profile/main/profile.ps1
 
 $debug = $false
 
@@ -8,8 +8,9 @@ $timeFilePath = [Environment]::GetFolderPath("MyDocuments") + "\PowerShell\LastE
 # Define the update interval in days, set to -1 to always check
 $updateInterval = 7
 
-#opt-out of telemetry before doing anything, only if PowerShell is run as admin
-if ([bool]([System.Security.Principal.WindowsIdentity]::GetCurrent()).IsSystem) {
+# Opt-out of telemetry before doing anything, only if PowerShell is run as admin
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if ($isAdmin) {
     [System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'true', [System.EnvironmentVariableTarget]::Machine)
 }
 
@@ -18,10 +19,19 @@ if (-not (Test-Path -Path $ModulesPath)) {
     New-Item -ItemType Directory -Path $ModulesPath -Force
 }
 
-# Ajout du dossier modules locaux au path
+# Add local modules folder to path
 $env:PSModulePath = $ModulesPath + ";" + $env:PSModulePath
 
-# Vérifier si Terminal Icons est installé
+# Add ~/.local/bin to PATH for Claude Code and other tools
+$LocalBinPath = "$env:USERPROFILE\.local\bin"
+if (-not (Test-Path -Path $LocalBinPath)) {
+    New-Item -ItemType Directory -Path $LocalBinPath -Force
+}
+if ($env:PATH -notlike "*$LocalBinPath*") {
+    $env:PATH = $LocalBinPath + ";" + $env:PATH
+}
+
+# Check if Terminal Icons is installed
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
@@ -38,10 +48,10 @@ try {
     Import-Module -Name $modulesToLoad -ErrorAction Stop
 }
 catch {
-    Write-Warning "Some modules failed to import : $_"
+    Write-Warning "Some modules failed to import: $_"
 }
 
-# Utilisation du prompt Starship (winget install --id Starship.Starship)
+# Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
@@ -53,7 +63,7 @@ else {
         $host.UI.RawUI.WindowTitle = "PowerShell $($ExecutionContext.SessionState.Path.CurrentLocation)$('>' * ($NestedPromptLevel + 1))"
         Write-Host " "
         Write-Host ($ExecutionContext.SessionState.Path.CurrentLocation) -ForegroundColor Cyan
-    
+
         $promptString = "PS>" + (" " * $NestedPromptLevel) + " "
         Write-Host $promptString -NoNewLine
         return ' '
@@ -63,7 +73,7 @@ else {
 # Enhanced PowerShell Experience
 # Enhanced PSReadLine Configuration
 $PSReadLineOptions = @{
-    EditMode = 'Windows'
+    EditMode = 'Vi'
     HistoryNoDuplicates = $true
     HistorySearchCursorMovesToEnd = $true
     Colors = @{
@@ -81,16 +91,17 @@ $PSReadLineOptions = @{
     BellStyle = 'None'
 }
 
-# Vérifier si l'environnement prend en charge les fonctionnalités de prédiction
+# Check if the environment supports prediction features
 $supportsVirtualTerminal = $Host.UI.SupportsVirtualTerminal -and -not [System.Console]::IsOutputRedirected
 
-# Ajouter les options de prédiction seulement si l'environnement les prend en charge
+# Add prediction options only if the environment supports them
 if ($supportsVirtualTerminal) {
-    $PSReadLineOptions['PredictionSource'] = 'History'
+    $PSReadLineOptions['PredictionSource'] = 'HistoryAndPlugin'
     $PSReadLineOptions['PredictionViewStyle'] = 'ListView'
 }
 
 Set-PSReadLineOption @PSReadLineOptions
+Set-PSReadLineOption -MaximumHistoryCount 10000
 
 # Custom key handlers
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
@@ -112,19 +123,13 @@ Set-PSReadLineOption -AddToHistoryHandler {
     return ($null -eq $hasSensitive)
 }
 
-# Improved prediction settings - seulement si l'environnement le prend en charge
-if ($supportsVirtualTerminal) {
-    Set-PSReadLineOption -PredictionSource HistoryAndPlugin
-}
-Set-PSReadLineOption -MaximumHistoryCount 10000
-
 # Custom completion for common commands
 $scriptblock = {
     param($wordToComplete, $commandAst, $cursorPosition)
     $customCompletions = @{
         'git' = @('status', 'add', 'commit', 'push', 'pull', 'clone', 'checkout')
     }
-    
+
     $command = $commandAst.CommandElements[0].Value
     if ($customCompletions.ContainsKey($command)) {
         $customCompletions[$command] | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
@@ -156,20 +161,6 @@ function Update-Profile {
     }
 }
 
-# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
-if (-not $debug -and `
-    ($updateInterval -eq -1 -or `
-      -not (Test-Path $timeFilePath) -or `
-      ((Get-Date) - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null)).TotalDays -gt $updateInterval)) {
-
-    Update-Profile
-    $currentTime = Get-Date -Format 'yyyy-MM-dd'
-    $currentTime | Out-File -FilePath $timeFilePath
-
-} elseif ($debug) {
-    Write-Warning "Skipping profile update check in debug mode"
-}
-
 function Update-PowerShell {
     try {
         Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
@@ -194,22 +185,22 @@ function Update-PowerShell {
     }
 }
 
-# skip in debug mode
-# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
+# Check for profile and PowerShell updates
 if (-not $debug -and `
     ($updateInterval -eq -1 -or `
-     -not (Test-Path $timeFilePath) -or `
-     ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
+      -not (Test-Path $timeFilePath) -or `
+      ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
 
+    Update-Profile
     Update-PowerShell
     $currentTime = Get-Date -Format 'yyyy-MM-dd'
     $currentTime | Out-File -FilePath $timeFilePath
+
 } elseif ($debug) {
-    Write-Warning "Skipping PowerShell update in debug mode"
+    Write-Warning "Skipping profile and PowerShell updates in debug mode"
 }
 
 function Clear-Cache {
-    # add clear cache logic here
     Write-Host "Clearing cache..." -ForegroundColor Cyan
 
     # Clear Windows Prefetch
@@ -231,9 +222,75 @@ function Clear-Cache {
     Write-Host "Cache clearing completed." -ForegroundColor Green
 }
 
+
+function Install-ClaudeCode {
+    <#
+    .SYNOPSIS
+        Installs Claude Code and configures the Git Bash environment variable.
+    .DESCRIPTION
+        Configures the CLAUDE_CODE_GIT_BASH_PATH environment variable first,
+        then downloads and installs Claude Code from the official installation script.
+    #>
+
+    Write-Host "`r`nPreparing Claude Code installation..." -ForegroundColor Cyan
+
+    # Configure Git Bash environment variable BEFORE installation
+    Write-Host "Configuring Claude Code environment variable..." -ForegroundColor Yellow
+
+    try {
+        # Search for bash.exe in common locations
+        $possiblePaths = @(
+            "C:\Program Files\Git\bin\bash.exe",
+            "C:\Program Files (x86)\Git\bin\bash.exe",
+            "$env:LOCALAPPDATA\Programs\Git\bin\bash.exe",
+            "C:\Program Files\Git\usr\bin\bash.exe"
+        )
+
+        $gitBashPath = $possiblePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+        if ($gitBashPath) {
+            [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_GIT_BASH_PATH", $gitBashPath, "User")
+            $env:CLAUDE_CODE_GIT_BASH_PATH = $gitBashPath  # Set for current session
+            Write-Host "CLAUDE_CODE_GIT_BASH_PATH set to: $gitBashPath" -ForegroundColor Green
+        }
+        else {
+            Write-Warning "bash.exe not found in common locations. Claude Code may not work properly."
+            Write-Host "You can manually set the environment variable with:" -ForegroundColor Yellow
+            Write-Host '[System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_GIT_BASH_PATH", "C:\Path\To\bash.exe", "User")' -ForegroundColor Gray
+
+            $continue = Read-Host "`nDo you want to continue with the installation anyway? (Y/N)"
+            if ($continue -notmatch '^[Yy]') {
+                Write-Host "Installation cancelled." -ForegroundColor Yellow
+                return
+            }
+        }
+    }
+    catch {
+        Write-Error "Error while configuring CLAUDE_CODE_GIT_BASH_PATH: $_"
+        return
+    }
+
+    # Install Claude Code AFTER environment variable is set
+    Write-Host "`r`nInstalling Claude Code..." -ForegroundColor Cyan
+
+    try {
+        Write-Host "Downloading and executing Claude Code installer..." -ForegroundColor Yellow
+        Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+        Write-Host "Claude Code installation completed successfully." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Error while installing Claude Code: $_"
+        return
+    }
+
+    Write-Host "`r`nClaude Code installation process completed!" -ForegroundColor Cyan
+    Write-Host "You may need to restart your PowerShell session for changes to take effect." -ForegroundColor Magenta
+}
+
+
 # Quick Access to Editing the Profile
 function Edit-Profile {
-    hx $PROFILE.CurrentUserAllHosts
+    nvim $PROFILE.CurrentUserAllHosts
 }
 Set-Alias -Name ep -Value Edit-Profile
 
@@ -249,7 +306,13 @@ function touch($file) {
     }
 }
 
-function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
+function Get-PubIP {
+    try {
+        (Invoke-WebRequest http://ifconfig.me/ip).Content
+    } catch {
+        Write-Error "Unable to retrieve public IP: $_"
+    }
+}
 
 # Open WinUtil full-release
 function winutil {
@@ -274,7 +337,7 @@ function mkcd { param($dir) mkdir $dir -Force; Set-Location $dir }
 function grep($regex, $dir) {
     if ($dir) {
         if (!(Test-Path $dir)) {
-            Write-Error "Le répertoire $dir n'existe pas"
+            Write-Error "The directory $dir does not exist"
             return
         }
         Get-ChildItem $dir | Select-String $regex -ErrorAction SilentlyContinue
@@ -289,7 +352,7 @@ function df {
 
 function sed($file, $find, $replace) {
     if (!(Test-Path $file)) {
-        Write-Error "Le fichier $file n'existe pas"
+        Write-Error "The file $file does not exist"
         return
     }
     (Get-Content $file).replace("$find", $replace) | Set-Content $file
@@ -307,9 +370,9 @@ function pkill($name) {
     $processes = Get-Process $name -ErrorAction SilentlyContinue
     if ($processes) {
         $processes | Stop-Process
-        Write-Host "Processus $name terminé(s)" -ForegroundColor Green
+        Write-Host "Process $name terminated" -ForegroundColor Green
     } else {
-        Write-Host "Aucun processus $name trouvé" -ForegroundColor Yellow
+        Write-Host "No process $name found" -ForegroundColor Yellow
     }
 }
 
@@ -319,13 +382,17 @@ Get-Process $name
 
 function head {
     param($Path, $n = 10)
+    if (!(Test-Path $Path)) {
+        Write-Error "The file $Path does not exist"
+        return
+    }
     Get-Content $Path -Head $n
 }
 
 function tail {
     param($Path, $n = 10, [switch]$f = $false)
     if (!(Test-Path $Path)) {
-        Write-Error "Le fichier $Path n'existe pas"
+        Write-Error "The file $Path does not exist"
         return
     }
     Get-Content $Path -Tail $n -Wait:$f
@@ -356,8 +423,8 @@ function ws($app) {
 	winget search $app
 }
 
-function wi($app) {
-	winget install $app
+function wi($id) {
+	winget install --id $id --source winget
 }
 
 function wl { winget list }
@@ -373,8 +440,4 @@ function sysinfo { Get-ComputerInfo }
 function flushdns {
 	Clear-DnsClientCache
 	Write-Host "DNS has been flushed"
-}
-
-function claude {
-	npx win-claude-code@latest
 }
