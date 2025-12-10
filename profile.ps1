@@ -52,34 +52,10 @@ if ($env:PATH -notlike "*$LocalBinPath*") {
 
 if ($profileDebug) { Mark-Timing "After PATH setup" }
 
-# Lazy-load Terminal-Icons module
-# Install Terminal-Icons if not present
-if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
-    Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
-}
-
-# Override Get-ChildItem aliases to lazy-load Terminal-Icons
-$lazyLoadTerminalIcons = {
-    if (-not (Get-Module -Name Terminal-Icons)) {
-        Import-Module -Name Terminal-Icons -ErrorAction SilentlyContinue
-    }
-}
-
-# Create wrapper functions for ls, dir, and gci
-function ls {
-    & $lazyLoadTerminalIcons
-    Get-ChildItem @args
-}
-
-function dir {
-    & $lazyLoadTerminalIcons
-    Get-ChildItem @args
-}
-
-# Note: LexxPoshTools and poshible will auto-load when their commands are used
+# Note: All modules (Terminal-Icons, LexxPoshTools, poshible) will auto-load when their commands are used
 # PowerShell's native module auto-loading handles them automatically
 
-if ($profileDebug) { Mark-Timing "After module setup (lazy-load)" }
+if ($profileDebug) { Mark-Timing "After module setup" }
 
 # Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
@@ -116,7 +92,8 @@ function prompt {
     $gitBranch = git branch --show-current 2>$null
     if ($gitBranch) {
         Write-Host " " -NoNewline -ForegroundColor DarkGray
-        Write-Host "$gitBranch" -NoNewline -ForegroundColor Green
+        Write-Host "" -NoNewline -ForegroundColor White
+        Write-Host " $gitBranch" -NoNewline -ForegroundColor Green
     }
 
     Write-Host ""
@@ -203,7 +180,7 @@ Register-ArgumentCompleter -Native -CommandName git -ScriptBlock $scriptblock
 
 if ($profileDebug) { Mark-Timing "After argument completers" }
 
-$env:BAT_STYLE="header,header-filesize,grid"
+$env:BAT_STYLE="header,header-filesize"
 
 # Check for Profile Updates
 function Update-Profile {
@@ -265,29 +242,6 @@ if (-not $debug -and `
 }
 
 if ($profileDebug) { Mark-Timing "After update checks" }
-
-function Clear-Cache {
-    Write-Host "Clearing cache..." -ForegroundColor Cyan
-
-    # Clear Windows Prefetch
-    Write-Host "Clearing Windows Prefetch..." -ForegroundColor Yellow
-    Remove-Item -Path "$env:SystemRoot\Prefetch\*" -Force -ErrorAction SilentlyContinue
-
-    # Clear Windows Temp
-    Write-Host "Clearing Windows Temp..." -ForegroundColor Yellow
-    Remove-Item -Path "$env:SystemRoot\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
-
-    # Clear User Temp
-    Write-Host "Clearing User Temp..." -ForegroundColor Yellow
-    Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
-
-    # Clear Internet Explorer Cache
-    Write-Host "Clearing Internet Explorer Cache..." -ForegroundColor Yellow
-    Remove-Item -Path "$env:LOCALAPPDATA\Microsoft\Windows\INetCache\*" -Recurse -Force -ErrorAction SilentlyContinue
-
-    Write-Host "Cache clearing completed." -ForegroundColor Green
-}
-
 
 function Install-ClaudeCode {
     <#
