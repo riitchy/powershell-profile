@@ -1,6 +1,23 @@
 # Partially based on Chris Titus Tech: https://raw.githubusercontent.com/ChrisTitusTech/powershell-profile/main/profile.ps1
 
 $debug = $false
+$profileDebug = $true  # Set to $false to disable profiling
+
+# Profiling timer
+$script:profileTimer = @{}
+$script:lastMark = $null
+function Mark-Timing {
+    param($Label)
+    $now = Get-Date
+    if ($script:lastMark) {
+        $diff = ($now - $script:lastMark).TotalMilliseconds
+        Write-Host "[PROFILE] $Label : ${diff}ms" -ForegroundColor DarkYellow
+    }
+    $script:profileTimer[$Label] = $now
+    $script:lastMark = $now
+}
+
+if ($profileDebug) { Mark-Timing "START" }
 
 # Define the path to the file that stores the last execution time
 $timeFilePath = [Environment]::GetFolderPath("MyDocuments") + "\PowerShell\LastExecutionTime.txt"
@@ -22,6 +39,8 @@ if (-not (Test-Path -Path $ModulesPath)) {
 # Add local modules folder to path
 $env:PSModulePath = $ModulesPath + ";" + $env:PSModulePath
 
+if ($profileDebug) { Mark-Timing "After initial setup" }
+
 # Add ~/.local/bin to PATH for Claude Code and other tools
 $LocalBinPath = "$env:USERPROFILE\.local\bin"
 if (-not (Test-Path -Path $LocalBinPath)) {
@@ -31,10 +50,14 @@ if ($env:PATH -notlike "*$LocalBinPath*") {
     $env:PATH = $LocalBinPath + ";" + $env:PATH
 }
 
+if ($profileDebug) { Mark-Timing "After PATH setup" }
+
 # Check if Terminal Icons is installed
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
+
+if ($profileDebug) { Mark-Timing "After Terminal-Icons check" }
 
 $LexxPoshToolsInstalled = Get-Module -ListAvailable -Name LexxPoshTools
 $poshibleInstalled = Get-Module -ListAvailable -Name poshible
@@ -51,12 +74,15 @@ catch {
     Write-Warning "Some modules failed to import: $_"
 }
 
+if ($profileDebug) { Mark-Timing "After module imports" }
+
 # Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "\PowerShell\oh-my-posh\themes\amro.omp.json"
     oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Invoke-Expression
+    if ($profileDebug) { Mark-Timing "After oh-my-posh init" }
 }
 else {
     function prompt {
@@ -103,6 +129,8 @@ if ($supportsVirtualTerminal) {
 Set-PSReadLineOption @PSReadLineOptions
 Set-PSReadLineOption -MaximumHistoryCount 10000
 
+if ($profileDebug) { Mark-Timing "After PSReadLine options" }
+
 # Custom key handlers
 Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
@@ -117,6 +145,8 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Redo
 
 # Vi mode cursor shapes
 Set-PSReadLineOption -ViModeIndicator Cursor
+
+if ($profileDebug) { Mark-Timing "After PSReadLine key handlers" }
 
 # Custom functions for PSReadLine
 Set-PSReadLineOption -AddToHistoryHandler {
@@ -141,6 +171,8 @@ $scriptblock = {
     }
 }
 Register-ArgumentCompleter -Native -CommandName git -ScriptBlock $scriptblock
+
+if ($profileDebug) { Mark-Timing "After argument completers" }
 
 $env:BAT_STYLE="header,header-filesize,grid"
 
@@ -202,6 +234,8 @@ if (-not $debug -and `
 } elseif ($debug) {
     Write-Warning "Skipping profile and PowerShell updates in debug mode"
 }
+
+if ($profileDebug) { Mark-Timing "After update checks" }
 
 function Clear-Cache {
     Write-Host "Clearing cache..." -ForegroundColor Cyan
@@ -443,4 +477,12 @@ function sysinfo { Get-ComputerInfo }
 function flushdns {
 	Clear-DnsClientCache
 	Write-Host "DNS has been flushed"
+}
+
+# Display profiling summary at the end
+if ($profileDebug) {
+    Mark-Timing "END"
+    $totalTime = ($script:profileTimer["END"] - $script:profileTimer["START"]).TotalMilliseconds
+    Write-Host "`n[PROFILE] Total profile load time: ${totalTime}ms" -ForegroundColor Green
+    Write-Host "[PROFILE] Set `$profileDebug = `$false to disable profiling`n" -ForegroundColor DarkGray
 }
