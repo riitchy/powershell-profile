@@ -80,19 +80,20 @@ if ($profileDebug) { Mark-Timing "After module setup" }
 function prompt {
     $host.UI.RawUI.WindowTitle = "PowerShell - $pwd"
 
-    # User@Host
+    # User icon and name
+    Write-Host " $([char]0xf007)" -NoNewline -ForegroundColor Blue  # User icon
     Write-Host " $env:USERNAME" -NoNewline -ForegroundColor Cyan
     Write-Host "@" -NoNewline -ForegroundColor DarkGray
     Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor Cyan
 
-    # Current directory
+    # Folder icon and current directory
+    Write-Host " $([char]0xf07c)" -NoNewline -ForegroundColor Yellow  # Folder icon
     Write-Host " $($executionContext.SessionState.Path.CurrentLocation)" -NoNewline -ForegroundColor Yellow
 
     # Git branch if in a repo
     $gitBranch = git branch --show-current 2>$null
     if ($gitBranch) {
-        Write-Host " " -NoNewline -ForegroundColor DarkGray
-        Write-Host "" -NoNewline -ForegroundColor White
+        Write-Host " $([char]0xe0a0)" -NoNewline -ForegroundColor Magenta  # Git branch icon
         Write-Host " $gitBranch" -NoNewline -ForegroundColor Green
     }
 
