@@ -52,37 +52,51 @@ if ($env:PATH -notlike "*$LocalBinPath*") {
 
 if ($profileDebug) { Mark-Timing "After PATH setup" }
 
-# Check if Terminal Icons is installed
+# Lazy-load Terminal-Icons module
+# Install Terminal-Icons if not present
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
 
-if ($profileDebug) { Mark-Timing "After Terminal-Icons check" }
-
-$LexxPoshToolsInstalled = Get-Module -ListAvailable -Name LexxPoshTools
-$poshibleInstalled = Get-Module -ListAvailable -Name poshible
-
-$modulesToLoad = @('Terminal-Icons')
-
-if ($LexxPoshToolsInstalled) { $modulesToLoad += 'LexxPoshTools' } else { Write-Warning "LexxPoshTools is not installed." }
-if ($poshibleInstalled) { $modulesToLoad += 'poshible' } else { Write-Warning "poshible is not installed." }
-
-try {
-    Import-Module -Name $modulesToLoad -ErrorAction Stop
-}
-catch {
-    Write-Warning "Some modules failed to import: $_"
+# Override Get-ChildItem aliases to lazy-load Terminal-Icons
+$lazyLoadTerminalIcons = {
+    if (-not (Get-Module -Name Terminal-Icons)) {
+        Import-Module -Name Terminal-Icons -ErrorAction SilentlyContinue
+    }
 }
 
-if ($profileDebug) { Mark-Timing "After module imports" }
+# Create wrapper functions for ls, dir, and gci
+function ls {
+    & $lazyLoadTerminalIcons
+    Get-ChildItem @args
+}
+
+function dir {
+    & $lazyLoadTerminalIcons
+    Get-ChildItem @args
+}
+
+# Note: LexxPoshTools and poshible will auto-load when their commands are used
+# PowerShell's native module auto-loading handles them automatically
+
+if ($profileDebug) { Mark-Timing "After module setup (lazy-load)" }
 
 # Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
 
 if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "\PowerShell\oh-my-posh\themes\amro.omp.json"
-    oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Invoke-Expression
-    if ($profileDebug) { Mark-Timing "After oh-my-posh init" }
+    $ohmyposhCache = "$env:TEMP\omp-init-cache.ps1"
+
+    # Regenerate cache if it doesn't exist or is older than 1 day
+    if (-not (Test-Path $ohmyposhCache) -or
+        ((Get-Item $ohmyposhCache).LastWriteTime -lt (Get-Date).AddDays(-1))) {
+        oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Out-File $ohmyposhCache -Encoding utf8
+    }
+
+    # Load from cache (much faster)
+    . $ohmyposhCache
+    if ($profileDebug) { Mark-Timing "After oh-my-posh init (cached)" }
 }
 else {
     function prompt {
