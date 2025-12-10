@@ -42,11 +42,6 @@ if ($env:PATH -notlike "*$LocalBinPath*") {
 
 if ($profileDebug) { Mark-Timing "After PATH setup" }
 
-# Note: All modules (Terminal-Icons, LexxPoshTools, poshible) will auto-load when their commands are used
-# PowerShell's native module auto-loading handles them automatically
-
-if ($profileDebug) { Mark-Timing "After module setup" }
-
 # Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
 
