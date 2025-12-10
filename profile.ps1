@@ -1,7 +1,6 @@
 # Partially based on Chris Titus Tech: https://raw.githubusercontent.com/ChrisTitusTech/powershell-profile/main/profile.ps1
 
-$debug = $false
-$profileDebug = $true  # Set to $false to disable profiling
+$profileDebug = $false  # Set to $true to enable profiling
 
 # Profiling timer
 $script:profileTimer = @{}
@@ -19,17 +18,8 @@ function Mark-Timing {
 
 if ($profileDebug) { Mark-Timing "START" }
 
-# Define the path to the file that stores the last execution time
-$timeFilePath = [Environment]::GetFolderPath("MyDocuments") + "\PowerShell\LastExecutionTime.txt"
-
-# Define the update interval in days, set to -1 to always check
-$updateInterval = 7
-
-# Opt-out of telemetry before doing anything, only if PowerShell is run as admin
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if ($isAdmin) {
-    [System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'true', [System.EnvironmentVariableTarget]::Machine)
-}
+# Opt-out of PowerShell telemetry for current session
+$env:POWERSHELL_TELEMETRY_OPTOUT = 'true'
 
 $ModulesPath = "C:\Users\$env:USERNAME\PSModules"
 if (-not (Test-Path -Path $ModulesPath)) {
@@ -183,7 +173,7 @@ if ($profileDebug) { Mark-Timing "After argument completers" }
 
 $env:BAT_STYLE="header,header-filesize"
 
-# Check for Profile Updates
+# Manual update functions (call Update-Profile or Update-PowerShell manually if needed)
 function Update-Profile {
     try {
         $url = "https://raw.githubusercontent.com/riitchy/powershell-profile/master/profile.ps1"
@@ -226,23 +216,6 @@ function Update-PowerShell {
         Write-Error "Failed to update PowerShell. Error: $_"
     }
 }
-
-# Check for profile and PowerShell updates
-if (-not $debug -and `
-    ($updateInterval -eq -1 -or `
-      -not (Test-Path $timeFilePath) -or `
-      ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
-
-    Update-Profile
-    Update-PowerShell
-    $currentTime = Get-Date -Format 'yyyy-MM-dd'
-    $currentTime | Out-File -FilePath $timeFilePath
-
-} elseif ($debug) {
-    Write-Warning "Skipping profile and PowerShell updates in debug mode"
-}
-
-if ($profileDebug) { Mark-Timing "After update checks" }
 
 function Install-ClaudeCode {
     <#
