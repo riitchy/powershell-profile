@@ -84,31 +84,46 @@ if ($profileDebug) { Mark-Timing "After module setup (lazy-load)" }
 # Using Starship prompt (winget install --id Starship.Starship)
 # Invoke-Expression (&starship init powershell)
 
-if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
-    $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "\PowerShell\oh-my-posh\themes\amro.omp.json"
-    $ohmyposhCache = "$env:TEMP\omp-init-cache.ps1"
+# Oh-my-posh prompt (commented out for performance - adds ~330ms to load time)
+# if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue) {
+#     $ohmyposhConfig = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "\PowerShell\oh-my-posh\themes\amro.omp.json"
+#     $ohmyposhCache = "$env:TEMP\omp-init-cache.ps1"
+#
+#     # Regenerate cache if it doesn't exist or is older than 1 day
+#     if (-not (Test-Path $ohmyposhCache) -or
+#         ((Get-Item $ohmyposhCache).LastWriteTime -lt (Get-Date).AddDays(-1))) {
+#         oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Out-File $ohmyposhCache -Encoding utf8
+#     }
+#
+#     # Load from cache (much faster)
+#     . $ohmyposhCache
+#     if ($profileDebug) { Mark-Timing "After oh-my-posh init (cached)" }
+# }
 
-    # Regenerate cache if it doesn't exist or is older than 1 day
-    if (-not (Test-Path $ohmyposhCache) -or
-        ((Get-Item $ohmyposhCache).LastWriteTime -lt (Get-Date).AddDays(-1))) {
-        oh-my-posh --init --shell pwsh --config $ohmyposhConfig | Out-File $ohmyposhCache -Encoding utf8
+# Custom prompt function
+function prompt {
+    $host.UI.RawUI.WindowTitle = "PowerShell - $pwd"
+
+    # User@Host
+    Write-Host " $env:USERNAME" -NoNewline -ForegroundColor Cyan
+    Write-Host "@" -NoNewline -ForegroundColor DarkGray
+    Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor Cyan
+
+    # Current directory
+    Write-Host " $($executionContext.SessionState.Path.CurrentLocation)" -NoNewline -ForegroundColor Yellow
+
+    # Git branch if in a repo
+    $gitBranch = git branch --show-current 2>$null
+    if ($gitBranch) {
+        Write-Host " " -NoNewline -ForegroundColor DarkGray
+        Write-Host "$gitBranch" -NoNewline -ForegroundColor Green
     }
 
-    # Load from cache (much faster)
-    . $ohmyposhCache
-    if ($profileDebug) { Mark-Timing "After oh-my-posh init (cached)" }
+    Write-Host ""
+    return "❯ "
 }
-else {
-    function prompt {
-        $host.UI.RawUI.WindowTitle = "PowerShell $($ExecutionContext.SessionState.Path.CurrentLocation)$('>' * ($NestedPromptLevel + 1))"
-        Write-Host " "
-        Write-Host ($ExecutionContext.SessionState.Path.CurrentLocation) -ForegroundColor Cyan
 
-        $promptString = "PS>" + (" " * $NestedPromptLevel) + " "
-        Write-Host $promptString -NoNewLine
-        return ' '
-    }
-}
+if ($profileDebug) { Mark-Timing "After custom prompt setup" }
 
 # Enhanced PowerShell Experience
 # Enhanced PSReadLine Configuration
