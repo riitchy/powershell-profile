@@ -71,13 +71,13 @@ function prompt {
     $host.UI.RawUI.WindowTitle = "PowerShell - $pwd"
 
     # User icon and name
-    Write-Host "$env:USERNAME" -NoNewline -ForegroundColor Cyan
+    Write-Host "$env:USERNAME" -NoNewline -ForegroundColor DarkCyan
     Write-Host "@" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor Cyan
+    Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor DarkCyan
 
     # Folder icon and current directory
     Write-Host " $([char]0xf07c) " -NoNewline -ForegroundColor Yellow  # Folder icon
-    Write-Host " $($executionContext.SessionState.Path.CurrentLocation)" -NoNewline -ForegroundColor Yellow
+    Write-Host " $($executionContext.SessionState.Path.CurrentLocation)" -NoNewline -ForegroundColor DarkYellow
 
     # Git branch if in a repo
     $gitBranch = git branch --show-current 2>$null
