@@ -181,7 +181,7 @@ Register-ArgumentCompleter -Native -CommandName git -ScriptBlock $scriptblock
 
 if ($profileDebug) { Mark-Timing "After argument completers" }
 
-$env:BAT_STYLE="header,header-filesize"
+$env:BAT_STYLE="header,header-filesize,plain"
 
 # Manual update functions (call Update-Profile or Update-PowerShell manually if needed)
 function Update-Profile {
