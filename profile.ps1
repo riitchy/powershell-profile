@@ -63,26 +63,42 @@ if ($profileDebug) { Mark-Timing "After PATH setup" }
 
 # Custom prompt function
 function prompt {
-    $host.UI.RawUI.WindowTitle = "PowerShell - $pwd"
+    # Get path instantly
+    $path = $ExecutionContext.SessionState.Path.CurrentLocation.ToString()
+    
+    # Replace home with ~ to save space
+    if ($path.StartsWith($HOME)) { $path = $path.Replace($HOME, "~") }
 
-    # User icon and name
+    # Custom Window Title
+    $host.UI.RawUI.WindowTitle = "PowerShell $path"
+
+    # --- LINE 1 - Context ---
+    # User @ Computer
     Write-Host "$env:USERNAME" -NoNewline -ForegroundColor DarkCyan
     Write-Host "@" -NoNewline -ForegroundColor DarkGray
     Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor DarkCyan
 
-    # Folder icon and current directory
-    Write-Host " $([char]0xf07c) " -NoNewline -ForegroundColor Yellow  # Folder icon
-    Write-Host " $($executionContext.SessionState.Path.CurrentLocation)" -NoNewline -ForegroundColor DarkYellow
+    # Folder icon + path
+    Write-Host " $([char]0xf07c) " -NoNewline -ForegroundColor Yellow
+    Write-Host $path -NoNewline -ForegroundColor DarkYellow
 
-    # Git branch if in a repo
-    $gitBranch = git branch --show-current 2>$null
-    if ($gitBranch) {
-        Write-Host " $([char]0xe0a0)" -NoNewline -ForegroundColor Magenta  # Git branch icon
-        Write-Host " $gitBranch" -NoNewline -ForegroundColor Green
+    # Line jump
+    Write-Host ""
+
+    # --- LINE 2 - Root/User prompt ---
+    # Admin detection
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    
+    if ($isAdmin) {
+        # Admin mode - red hash (Unix Root style)
+        Write-Host "# " -NoNewline -ForegroundColor Red
+    } else {
+        # User Mode
+        Write-Host "❯ " -NoNewline -ForegroundColor Cyan
     }
 
-    Write-Host ""
-    return "❯ "
+    # Mandatory return with final space
+    return " "
 }
 
 if ($profileDebug) { Mark-Timing "After custom prompt setup" }
