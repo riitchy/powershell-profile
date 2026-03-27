@@ -19,7 +19,7 @@ function Mark-Timing
 }
 
 if ($profileDebug)
-{ Mark-Timing "START" 
+{ Mark-Timing "START"
 }
 
 # Opt-out of PowerShell telemetry for current session
@@ -35,7 +35,7 @@ if (-not (Test-Path -Path $ModulesPath))
 $env:PSModulePath = $ModulesPath + ";" + $env:PSModulePath
 
 if ($profileDebug)
-{ Mark-Timing "After initial setup" 
+{ Mark-Timing "After initial setup"
 }
 
 # Add ~/.local/bin to PATH for Claude Code and other tools
@@ -50,7 +50,7 @@ if ($env:PATH -notlike "*$LocalBinPath*")
 }
 
 if ($profileDebug)
-{ Mark-Timing "After PATH setup" 
+{ Mark-Timing "After PATH setup"
 }
 
 # Using Starship prompt (winget install --id Starship.Starship)
@@ -72,57 +72,57 @@ if (Get-Command "oh-my-posh" -ErrorAction SilentlyContinue)
     # Load from cache (much faster)
     . $ohmyposhCache
     if ($profileDebug)
-    { Mark-Timing "After oh-my-posh init (cached)" 
+    { Mark-Timing "After oh-my-posh init (cached)"
     }
-}
-
-# Custom prompt function
-function prompt
-{
-    # Get path instantly
-    $path = $ExecutionContext.SessionState.Path.CurrentLocation.ToString()
-
-    # Replace home with ~ to save space
-    if ($path.StartsWith($HOME))
-    { $path = $path.Replace($HOME, "~") 
-    }
-
-    # Custom Window Title
-    $host.UI.RawUI.WindowTitle = "PowerShell $path"
-
-    # --- LINE 1 - Context ---
-    # User @ Computer
-    Write-Host "$env:USERNAME" -NoNewline -ForegroundColor DarkCyan
-    Write-Host "@" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor DarkCyan
-
-    # Folder icon + path
-    Write-Host " $([char]0xf07c) " -NoNewline -ForegroundColor Yellow
-    Write-Host $path -NoNewline -ForegroundColor DarkYellow
-
-    # Line jump
-    Write-Host ""
-
-    # --- LINE 2 - Root/User prompt ---
-    # Admin detection
-    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-    if ($isAdmin)
+} else
+{ # Custom prompt function
+    function prompt
     {
-        # Admin mode - red hash (Unix Root style)
-        Write-Host "# " -NoNewline -ForegroundColor Red
-    } else
-    {
-        # User Mode
-        Write-Host "❯ " -NoNewline -ForegroundColor Cyan
-    }
+        # Get path instantly
+        $path = $ExecutionContext.SessionState.Path.CurrentLocation.ToString()
 
-    # Mandatory return with final space
-    return " "
+        # Replace home with ~ to save space
+        if ($path.StartsWith($HOME))
+        { $path = $path.Replace($HOME, "~")
+        }
+
+        # Custom Window Title
+        $host.UI.RawUI.WindowTitle = "PowerShell $path"
+
+        # --- LINE 1 - Context ---
+        # User @ Computer
+        Write-Host "$env:USERNAME" -NoNewline -ForegroundColor DarkCyan
+        Write-Host "@" -NoNewline -ForegroundColor DarkGray
+        Write-Host "$env:COMPUTERNAME" -NoNewline -ForegroundColor DarkCyan
+
+        # Folder icon + path
+        Write-Host " $([char]0xf07c) " -NoNewline -ForegroundColor Yellow
+        Write-Host $path -NoNewline -ForegroundColor DarkYellow
+
+        # Line jump
+        Write-Host ""
+
+        # --- LINE 2 - Root/User prompt ---
+        # Admin detection
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+        if ($isAdmin)
+        {
+            # Admin mode - red hash (Unix Root style)
+            Write-Host "# " -NoNewline -ForegroundColor Red
+        } else
+        {
+            # User Mode
+            Write-Host "❯ " -NoNewline -ForegroundColor Cyan
+        }
+
+        # Mandatory return with final space
+        return " "
+    }
 }
 
 if ($profileDebug)
-{ Mark-Timing "After custom prompt setup" 
+{ Mark-Timing "After custom prompt setup"
 }
 
 # Enhanced PowerShell Experience
@@ -160,7 +160,7 @@ Set-PSReadLineOption @PSReadLineOptions
 Set-PSReadLineOption -MaximumHistoryCount 10000
 
 if ($profileDebug)
-{ Mark-Timing "After PSReadLine options" 
+{ Mark-Timing "After PSReadLine options"
 }
 
 # Custom key handlers
@@ -179,7 +179,7 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Redo
 Set-PSReadLineOption -ViModeIndicator Cursor
 
 if ($profileDebug)
-{ Mark-Timing "After PSReadLine key handlers" 
+{ Mark-Timing "After PSReadLine key handlers"
 }
 
 # Custom functions for PSReadLine
@@ -208,7 +208,7 @@ $scriptblock = {
 Register-ArgumentCompleter -Native -CommandName git -ScriptBlock $scriptblock
 
 if ($profileDebug)
-{ Mark-Timing "After argument completers" 
+{ Mark-Timing "After argument completers"
 }
 
 $env:BAT_STYLE="header,header-filesize,plain,grid"
@@ -393,12 +393,12 @@ function admin
 
 # Quick File Creation
 function nf
-{ param($name) New-Item -ItemType "file" -Path . -Name $name 
+{ param($name) New-Item -ItemType "file" -Path . -Name $name
 }
 
 # Directory Management
 function mkcd
-{ param($dir) mkdir $dir -Force; Set-Location $dir 
+{ param($dir) mkdir $dir -Force; Set-Location $dir
 }
 
 function grep($regex, $dir)
@@ -483,23 +483,23 @@ function tail
 
 # Git Shortcuts
 function gs
-{ git status 
+{ git status
 }
 
 function ga
-{ git add . 
+{ git add .
 }
 
 function gc
-{ param($m) git commit -m "$m" 
+{ param($m) git commit -m "$m"
 }
 
 function gp
-{ git push 
+{ git push
 }
 
 function gcl
-{ git clone "$args" 
+{ git clone "$args"
 }
 
 function gcom
@@ -525,20 +525,20 @@ function wi($id)
 }
 
 function wl
-{ winget list 
+{ winget list
 }
 
 function wlu
-{ winget list --upgrade-available 
+{ winget list --upgrade-available
 }
 
 function wua
-{ winget upgrade --all 
+{ winget upgrade --all
 }
 
 # Quick Access to System Information
 function sysinfo
-{ Get-ComputerInfo 
+{ Get-ComputerInfo
 }
 
 # Networking Utilities
